@@ -1,6 +1,6 @@
 use std::fs;
 
-// This is a helper function to convert to convert the input string
+// This is a helper function to convert the input string
 // into the data structure we want
 fn convert(str: &str) -> Vec<Vec<u32>> {
     str.split("\n\n")
