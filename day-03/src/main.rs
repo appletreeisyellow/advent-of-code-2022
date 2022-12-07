@@ -13,26 +13,28 @@ fn convert_to_priority(v: u32) -> u32 {
     }
 }
 
-// find the common character between str1 and str2
-// e.g. "abc", "bdd" -> "b"
-fn find_common_char(str1: &str, str2: &str) -> char {
-    let hashset1: HashSet<_> = HashSet::from_iter(
-        str1.split("")
-            .filter_map(|char| if char != "" { Some(char) } else { None })
+fn convert_to_hashset(str: &str) -> HashSet<&str> {
+    HashSet::from_iter(
+        str.split("")
+            .filter_map(|char: &str| if char != "" { Some(char) } else { None })
             .collect::<Vec<&str>>(),
-    );
+    )
+}
 
-    let hashset2: HashSet<_> = HashSet::from_iter(
-        str2.split("")
-            .filter_map(|char| if char != "" { Some(char) } else { None })
-            .collect::<Vec<&str>>(),
-    );
+// find the common character between strs in a vec
+// e.g. ["abc", "bdd"] -> "b"
+fn find_common_char(strs: Vec<&str>) -> char {
+    let mut intersection_result: HashSet<&str> = convert_to_hashset(strs.clone()[0]);
+    strs.clone().into_iter().for_each(|str: &str| {
+        let hashset: HashSet<&str> = convert_to_hashset(str);
+        intersection_result = intersection_result
+            .intersection(&hashset)
+            .copied()
+            .collect();
+    });
 
-    let intersection = hashset1.intersection(&hashset2);
-
-    // should just have one element in intersection
-    if let Some(common_str) = intersection.last() {
-        common_str.chars().nth(0).unwrap()
+    if let Some(intersection_str) = intersection_result.into_iter().nth(0) {
+        intersection_str.chars().nth(0).unwrap()
     } else {
         ' '
     }
@@ -45,8 +47,19 @@ fn get_priority_sum(lines: Vec<&str>) -> u32 {
             let mid = line.len() / 2;
             let first_compartment = &line[..mid];
             let second_compartment = &line[mid..];
-            let common_char = find_common_char(first_compartment, second_compartment);
+            let common_char = find_common_char(vec![first_compartment, second_compartment]);
             Some(convert_to_priority(common_char as u32))
+        })
+        .sum::<u32>()
+}
+
+fn get_priority_sum_2(lines: Vec<&str>) -> u32 {
+    lines
+        .chunks(3)
+        .map(|group: &[&str]| {
+            let transformed: Vec<&str> = group.into_iter().map(|&s| s.into()).collect();
+            let common_char: char = find_common_char(transformed);
+            convert_to_priority(common_char as u32)
         })
         .sum::<u32>()
 }
@@ -64,18 +77,24 @@ mod test {
         assert_eq!(convert_to_priority('z' as u32), 26);
         assert_eq!(convert_to_priority('A' as u32), 27);
         assert_eq!(convert_to_priority('Z' as u32), 52);
-        assert_eq!(find_common_char("abc", "bdd"), 'b');
-        assert_eq!(find_common_char("abcds", "pesr"), 's');
+        assert_eq!(find_common_char(vec!["abc", "bdd"]), 'b');
+        assert_eq!(find_common_char(vec!["abcds", "pesr"]), 's');
     }
 
     #[test]
     fn test_part_one() {
         assert_eq!(get_priority_sum(EXAMPLE.lines().collect()), 157);
     }
+
+    #[test]
+    fn test_part_two() {
+        assert_eq!(get_priority_sum_2(EXAMPLE.lines().collect()), 70);
+    }
 }
 
 fn main() {
     let input: Vec<&str> = include_str!("../input.txt").lines().collect();
 
-    println!("Part 1: {:?}", get_priority_sum(input));
+    println!("Part 1: {:?}", get_priority_sum(input.clone()));
+    println!("Part 2: {:?}", get_priority_sum_2(input));
 }
