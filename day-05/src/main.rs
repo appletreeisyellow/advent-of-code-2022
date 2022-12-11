@@ -52,7 +52,7 @@ fn parse_movement(line: &str) -> (i32, i32, i32) {
     (res[0], res[1], res[2])
 }
 
-fn get_final_crates(lines: Vec<&str>) -> String {
+fn get_top_crates(lines: Vec<&str>) -> String {
     // find the index of the empty line
     let empty_line: usize = lines.iter().position(|&line: &&str| line == "").unwrap();
 
@@ -84,9 +84,41 @@ fn get_final_crates(lines: Vec<&str>) -> String {
         .collect::<String>()
 }
 
-fn get_final_crates_2(lines: Vec<&str>) -> String {
-    "A".to_string()
+fn get_top_crates_2(lines: Vec<&str>) -> String {
+    // find the index of the empty line
+    let empty_line: usize = lines.iter().position(|&line: &&str| line == "").unwrap();
+
+    // construct stacks of crates
+    let mut stacks: Vec<Vec<char>> = construct_stacks(&lines, empty_line - 1);
+
+    let movement_start: usize = empty_line + 1;
+    lines[movement_start..lines.len()]
+        // lines[movement_start..20]
+        .into_iter()
+        .for_each(|&line: &&str| {
+            // parse movement
+            let (num_crate, source, destination): (i32, i32, i32) = parse_movement(line);
+
+            // move crate
+            if num_crate > 0 {
+                let mut crates_to_move: Vec<char> = vec![];
+                (0..num_crate).for_each(|_| {
+                    if let Some(crate_to_move) = stacks[source as usize - 1].pop() {
+                        crates_to_move.push(crate_to_move);
+                    }
+                });
+                crates_to_move.iter().rev().for_each(|&crate_to_move| {
+                    stacks[destination as usize - 1].push(crate_to_move)
+                });
+            }
+        });
+
+    stacks
+        .into_iter()
+        .filter_map(|stack: Vec<char>| stack.clone().pop())
+        .collect::<String>()
 }
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -106,17 +138,18 @@ mod test {
 
     #[test]
     fn test_part_one() {
-        assert_eq!(get_final_crates(EXAMPLE.lines().collect()), "CMZ");
+        assert_eq!(get_top_crates(EXAMPLE.lines().collect()), "CMZ");
     }
 
     #[test]
     fn test_part_two() {
-        assert_eq!(get_final_crates_2(EXAMPLE.lines().collect()), "MCD");
+        assert_eq!(get_top_crates_2(EXAMPLE.lines().collect()), "MCD");
     }
 }
 
 fn main() {
     let input: Vec<&str> = include_str!("../input.txt").lines().collect();
 
-    println!("Part 1: {:?}", get_final_crates(input));
+    println!("Part 1: {:?}", get_top_crates(input.clone()));
+    println!("Part 2: {:?}", get_top_crates_2(input));
 }
