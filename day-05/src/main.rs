@@ -8,19 +8,6 @@ fn parse_crates(line: &str) -> Vec<char> {
         .collect::<Vec<char>>()
 }
 
-// " 1   2   3 " -> [1, 2, 3]
-fn get_total_crates(line: &str) -> Vec<i32> {
-    line.split(" ")
-        .filter_map(|crate_str| {
-            if crate_str == "" {
-                None
-            } else {
-                Some(crate_str.parse::<i32>().unwrap())
-            }
-        })
-        .collect::<Vec<i32>>()
-}
-
 // " 1   2   3 " -> [[], [], ]
 fn create_crate_stacks(line: &str) -> Vec<Vec<char>> {
     line.split(" ")
@@ -36,35 +23,64 @@ fn create_crate_stacks(line: &str) -> Vec<Vec<char>> {
         .collect::<Vec<Vec<char>>>()
 }
 
-fn get_final_crates(lines: Vec<&str>) -> &str {
-    // println!("{:?}", lines);
+// "move 3 from 2 to 1" -> (3, 2, 1)
+fn parse_movement(line: &str) -> (i32, i32, i32) {
+    let res: Vec<i32> = line
+        .split(" ")
+        .filter_map(|str: &str| match str.parse::<i32>() {
+            Ok(num) => Some(num),
+            Err(_) => None,
+        })
+        .collect::<Vec<i32>>();
 
+    (res[0], res[1], res[2])
+}
+
+fn get_final_crates(lines: Vec<&str>) -> String {
     // find the index of the empty line
     let empty_line: usize = lines.iter().position(|&line: &&str| line == "").unwrap();
 
     // construct stacks of crates
     //   get the total crate num
     let crate_bottom: usize = empty_line - 1;
-    let total_crates: Vec<i32> = get_total_crates(lines[crate_bottom]);
-
-    println!("total_crates {:?}", total_crates);
 
     //   stack crates line by line from bottom to top
     let mut stacks: Vec<Vec<char>> = create_crate_stacks(lines[crate_bottom]);
-    println!("{:?}", stacks);
-
     lines[0..crate_bottom]
         .iter()
         .rev()
         .for_each(|&line: &&str| {
             let crates: Vec<char> = parse_crates(line);
-            println!("{:?}", crates);
+            crates.iter().enumerate().for_each(|(i, &c)| {
+                if c != ' ' {
+                    stacks[i].push(c)
+                }
+            });
         });
 
-    // parse movement
-    // move crates
+    let movement_start: usize = empty_line + 1;
+    lines[movement_start..lines.len()]
+        // lines[movement_start..20]
+        .into_iter()
+        .for_each(|&line: &&str| {
+            // parse movement
+            let (num_crate, source, destination): (i32, i32, i32) = parse_movement(line);
 
-    "ABC"
+            // move crate
+            if num_crate > 0 {
+                (0..num_crate).for_each(|_| {
+                    // pop from source, push to destination
+                    if let Some(crate_to_move) = stacks[source as usize - 1].pop() {
+                        stacks[destination as usize - 1].push(crate_to_move);
+                    }
+                })
+            }
+        });
+
+    stacks
+        .into_iter()
+        .filter_map(|stack: Vec<char>| stack.clone().pop())
+        .collect::<String>()
 }
 
 #[cfg(test)]
@@ -75,15 +91,13 @@ mod test {
 
     #[test]
     fn test_helper_functions() {
-        assert_eq!(get_total_crates(" 1   2   3 "), vec![1, 2, 3]);
-        assert_eq!(
-            get_total_crates("1   2   3   4   5   6   7   8   9 "),
-            vec![1, 2, 3, 4, 5, 6, 7, 8, 9]
-        );
-
         assert_eq!(parse_crates("    [D]    "), vec![' ', 'D', ' ']);
         assert_eq!(parse_crates("[N] [C]    "), vec!['N', 'C', ' ']);
         assert_eq!(parse_crates("[Z] [M] [P]"), vec!['Z', 'M', 'P']);
+
+        assert_eq!(parse_movement("move 3 from 2 to 1"), (3, 2, 1));
+        assert_eq!(parse_movement("move 1 from 2 to 1"), (1, 2, 1));
+        assert_eq!(parse_movement("move 13 from 2 to 1"), (13, 2, 1));
     }
 
     #[test]
