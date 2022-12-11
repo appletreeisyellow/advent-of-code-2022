@@ -83,6 +83,9 @@ fn get_final_crates(lines: Vec<&str>) -> String {
         .collect::<String>()
 }
 
+fn get_final_crates_2(lines: Vec<&str>) -> String {
+    "A".to_string()
+}
 #[cfg(test)]
 mod test {
     use super::*;
@@ -103,6 +106,11 @@ mod test {
     #[test]
     fn test_part_one() {
         assert_eq!(get_final_crates(EXAMPLE.lines().collect()), "CMZ");
+    }
+
+    #[test]
+    fn test_part_two() {
+        assert_eq!(get_final_crates_2(EXAMPLE.lines().collect()), "MCD");
     }
 }
 
