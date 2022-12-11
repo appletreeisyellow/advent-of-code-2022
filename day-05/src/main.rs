@@ -9,7 +9,7 @@ fn parse_crates(line: &str) -> Vec<char> {
 }
 
 // " 1   2   3 " -> [[], [], ]
-fn create_crate_stacks(line: &str) -> Vec<Vec<char>> {
+fn create_empty_stacks(line: &str) -> Vec<Vec<char>> {
     line.split(" ")
         .filter_map(
             |crate_str| {
@@ -21,6 +21,22 @@ fn create_crate_stacks(line: &str) -> Vec<Vec<char>> {
             },
         )
         .collect::<Vec<Vec<char>>>()
+}
+
+fn construct_stacks(lines: &Vec<&str>, crate_bottom: usize) -> Vec<Vec<char>> {
+    let mut stacks: Vec<Vec<char>> = create_empty_stacks(lines[crate_bottom]);
+    lines[0..crate_bottom]
+        .iter()
+        .rev()
+        .for_each(|&line: &&str| {
+            let crates: Vec<char> = parse_crates(line);
+            crates.iter().enumerate().for_each(|(i, &c)| {
+                if c != ' ' {
+                    stacks[i].push(c)
+                }
+            });
+        });
+    stacks
 }
 
 // "move 3 from 2 to 1" -> (3, 2, 1)
@@ -41,22 +57,7 @@ fn get_final_crates(lines: Vec<&str>) -> String {
     let empty_line: usize = lines.iter().position(|&line: &&str| line == "").unwrap();
 
     // construct stacks of crates
-    //   get the total crate num
-    let crate_bottom: usize = empty_line - 1;
-
-    //   stack crates line by line from bottom to top
-    let mut stacks: Vec<Vec<char>> = create_crate_stacks(lines[crate_bottom]);
-    lines[0..crate_bottom]
-        .iter()
-        .rev()
-        .for_each(|&line: &&str| {
-            let crates: Vec<char> = parse_crates(line);
-            crates.iter().enumerate().for_each(|(i, &c)| {
-                if c != ' ' {
-                    stacks[i].push(c)
-                }
-            });
-        });
+    let mut stacks: Vec<Vec<char>> = construct_stacks(&lines, empty_line - 1);
 
     let movement_start: usize = empty_line + 1;
     lines[movement_start..lines.len()]
